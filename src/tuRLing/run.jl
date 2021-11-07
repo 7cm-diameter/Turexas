@@ -42,4 +42,4 @@ end
 
 q_agent = a.spawn(0.05, 2., k)
 result = run(q_agent, bandit, 500)
-fit(result, QLearningModel, 2, 500)
+fit(result, QLearningModel, k, 500)
