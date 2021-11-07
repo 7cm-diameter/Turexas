@@ -1,4 +1,4 @@
-using Distributions, DataFrames, Plots, Turing
+using Distributions, DataFrames, Plots, Turing, StatsPlots
 import Turexas.Environment as e
 import Turexas.Agent as a
 
@@ -51,4 +51,5 @@ q_agent = a.spawn(0.05, 2., k)
 result = run(q_agent, bandit, 500)
 # Run MCMC with a small number of samples in advance because it takes a long time to run MCMC the first time.
 _ = warmup_sampler(result, QLearningModel, k)
-fit(result, QLearningModel, k, 500)
+chains = fit(result, QLearningModel, k, 500)
+plot(chains)
