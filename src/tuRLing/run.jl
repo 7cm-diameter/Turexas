@@ -15,6 +15,13 @@ function run(agent::a.AbstractAgent, env::e.Bandit, trial::Int64)
     return reduce(vcat, map(_ -> step(agent, env), 1:trial))
 end
 
+# Run MCMC with a small number of samples
+function warmup_sampler(result::AbstractDataFrame, model, k::Int64)
+    actions = Array{Real, 1}(result.action)
+    rewards = Array{Real, 1}(result.reward)
+    sample(model(actions, rewards, k), NUTS(), 2)
+end
+
 function fit(result::AbstractDataFrame, model, k::Int64, iter::Int64)
     actions = Array{Real, 1}(result.action)
     rewards = Array{Real, 1}(result.reward)
@@ -42,4 +49,6 @@ end
 
 q_agent = a.spawn(0.05, 2., k)
 result = run(q_agent, bandit, 500)
+# Run MCMC with a small number of samples in advance because it takes a long time to run MCMC the first time.
+_ = warmup_sampler(result, QLearningModel, k)
 fit(result, QLearningModel, k, 500)
