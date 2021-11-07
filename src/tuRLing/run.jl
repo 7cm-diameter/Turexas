@@ -1,4 +1,4 @@
-using Distributions, DataFrames, Plots, Turing, StatsPlots
+using Distributions, DataFrames, Plots, Turing, StatsPlots, MCMCChains
 import Turexas.Environment as e
 import Turexas.Agent as a
 
@@ -16,16 +16,16 @@ function run(agent::a.AbstractAgent, env::e.Bandit, trial::Int64)
 end
 
 # Run MCMC with a small number of samples
-function warmup_sampler(result::AbstractDataFrame, model, k::Int64)
+function warmup_sampler(result::AbstractDataFrame, model, k::Int64, nchains::Int64 = 4)
     actions = Array{Real, 1}(result.action)
     rewards = Array{Real, 1}(result.reward)
-    sample(model(actions, rewards, k), NUTS(), 2)
+    sample(model(actions, rewards, k), NUTS(), MCMCThreads(), 2, nchains)
 end
 
-function fit(result::AbstractDataFrame, model, k::Int64, iter::Int64)
+function fit(result::AbstractDataFrame, model, k::Int64, iter::Int64, nchains::Int64 = 4)
     actions = Array{Real, 1}(result.action)
     rewards = Array{Real, 1}(result.reward)
-    sample(model(actions, rewards, k), NUTS(), iter)
+    sample(model(actions, rewards, k), NUTS(), MCMCThreads(), iter, nchains)
 end
 
 # generate an environment which is shared with all simulations
@@ -50,6 +50,6 @@ end
 q_agent = a.spawn(0.05, 2., k)
 result = run(q_agent, bandit, 500)
 # Run MCMC with a small number of samples in advance because it takes a long time to run MCMC the first time.
-_ = warmup_sampler(result, QLearningModel, k)
-chains = fit(result, QLearningModel, k, 500)
+_ = warmup_sampler(result, QLearningModel, k, 4)
+chains = fit(result, QLearningModel, k, 500, 4)
 plot(chains)
