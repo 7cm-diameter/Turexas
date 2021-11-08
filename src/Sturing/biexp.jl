@@ -14,7 +14,7 @@ end
 
 @model bi_exponential(samples::Array{Real, 1}) = begin
     theta1 ~ Gamma(1, 10)
-    theta2 ~ truncated(Normal(), theta1, 100)
+    theta2 ~ truncated(Normal(), theta1, theta1 + 100)
     p ~ Beta(1, 1)
     m = BiExponential(theta1, theta2, p)
     for i in 1:length(samples)
@@ -30,7 +30,8 @@ function svf(x::Array{Real, 1}, digits::Int64)
 end
 
 IRTs = Array{Real, 1}(generate_samples(0.1, 5, 0.9, 2000))
-chains = sample(bi_exponential(IRTs), NUTS(), MCMCThreads(), 1000, 4)
+_ = sample(bi_exponential(IRTs), NUTS(), MCMCThreads(), 2, 4)
+chains = sample(bi_exponential(IRTs), NUTS(), MCMCThreads(), 500, 4)
 plot(chains)
 
 IRTs_svf = svf(IRTs, 2)
