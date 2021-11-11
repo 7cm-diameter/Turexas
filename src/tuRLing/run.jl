@@ -48,8 +48,29 @@ k = length(bandit.p)
 end
 
 q_agent = a.spawn(0.05, 2., k)
-result = run(q_agent, bandit, 500)
+q_result = run(q_agent, bandit, 500)
 # Run MCMC with a small number of samples in advance because it takes a long time to run MCMC the first time.
-_ = warmup_sampler(result, QLearningModel, k, 4)
-chains = fit(result, QLearningModel, k, 500, 4)
+_ = warmup_sampler(q_result, QLearningModel, k, 4)
+chains = fit(q_result, QLearningModel, k, 500, 4)
+plot(chains)
+
+# Run simulation and model fitting with particle filter
+@model ParticleFilter(actions::Array{Real, 1}, rewards::Array{Real, 1}, k::Int64) = begin
+    T = length(actions)
+    σ2 ~ truncated(Normal(), 0.001, 5.)
+    β ~ Gamma(1, 100)
+    agent = a.spawn(100, σ2, β, k)
+    for t in 1:T
+        action = actions[t]
+        reward = rewards[t]
+        p = a.policy(agent)
+        actions[t] ~ Categorical(p)
+        a.update(agent, action, reward)
+    end
+end
+
+pf_agent = a.spawn(100, 0.5, 1., k)
+pf_result = run(pf_agent, bandit, 500)
+_ = warmup_sampler(pf_result, ParticleFilter, k, 4)
+chains = fit(pf_result, ParticleFilter, k, 500, 4)
 plot(chains)
