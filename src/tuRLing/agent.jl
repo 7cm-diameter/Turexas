@@ -8,11 +8,10 @@ mutable struct QLearningAgent <: AbstractAgent
     q::Array{Real, 1}
     α::Real
     β::Real
-end
-
-function spawn(α::Real, β::Real, k::Int64)
-    q = Array{Real, 1}(zeros(k))
-    return QLearningAgent(q, α, β)
+    function QLearningAgent(α::Real, β::Real, k::Int64)
+        q = Array{Real, 1}(zeros(k))
+        new(q, α, β)
+    end
 end
 
 function update(agent::QLearningAgent, action::Real, reward::Real)
@@ -31,18 +30,18 @@ mutable struct ParticleFilterAgent <: AbstractAgent
     q::Array{Real, 1}
     σ2::Real
     β::Real
+    function ParticleFilterAgent(npartcles::Real, σ2::Real, β::Real, k::Real)
+        particles = rand(Normal(), (k, npartcles))
+        probs = sigmoid.(particles)
+        q = sum(probs, dims=2)[:, 1] / size(probs, 2)
+        new(npartcles, particles, q, σ2, β)
+    end
 end
 
 function sigmoid(x::Real)
     1 / (1 + exp(-x))
 end
 
-function spawn(npartcles::Real, σ2::Real, β::Real, k::Real)
-    particles = rand(Normal(), (k, npartcles))
-    probs = sigmoid.(particles)
-    q = sum(probs, dims=2)[:, 1] / size(probs, 2)
-    ParticleFilterAgent(npartcles, particles, q, σ2, β)
-end
 
 function choice(x::Array{Real, 1}, p::Array{Real, 1}, n::Real)
     ret = Array{Real, 1}(undef, n)

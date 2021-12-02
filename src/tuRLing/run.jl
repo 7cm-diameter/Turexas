@@ -37,7 +37,7 @@ k = length(bandit.p)
     T = length(actions)
     α ~ Beta(1, 1)
     β ~ Gamma(1, 100)
-    agent = a.spawn(α, β, k)
+    agent = a.QLearningAgent(α, β, k)
     for t in 1:T
         action = actions[t]
         reward = rewards[t]
@@ -47,7 +47,7 @@ k = length(bandit.p)
     end
 end
 
-q_agent = a.spawn(0.05, 2., k)
+q_agent = a.QLearningAgent(0.05, 2., k)
 q_result = run(q_agent, bandit, 500)
 # Run MCMC with a small number of samples in advance because it takes a long time to run MCMC the first time.
 _ = warmup_sampler(q_result, QLearningModel, k, 4)
@@ -59,7 +59,7 @@ plot(chains)
     T = length(actions)
     σ2 ~ truncated(Normal(), 0.001, 5.)
     β ~ Gamma(1, 100)
-    agent = a.spawn(100, σ2, β, k)
+    agent = a.ParticleFilterAgent(100, σ2, β, k)
     for t in 1:T
         action = actions[t]
         reward = rewards[t]
@@ -69,7 +69,7 @@ plot(chains)
     end
 end
 
-pf_agent = a.spawn(100, 0.5, 1., k)
+pf_agent = a.ParticleFilterAgent(100, 0.5, 1., k)
 pf_result = run(pf_agent, bandit, 500)
 _ = warmup_sampler(pf_result, ParticleFilter, k, 4)
 chains = fit(pf_result, ParticleFilter, k, 500, 4)
